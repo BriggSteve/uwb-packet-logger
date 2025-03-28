@@ -2,7 +2,7 @@ import time
 import psycopg2
 import os
 from uwb_packet import UWBPacket
-
+import random
 # Pull connection info from environment
 conn = psycopg2.connect(
     dbname=os.getenv("DB_NAME"),
@@ -28,9 +28,17 @@ conn.commit()
 
 start = time.time()
 
+
 def mock_receive_bytes():
     timestamp = int((time.time() - start) * 1000)
-    pkt = UWBPacket(device_id=1, timestamp=timestamp, x=1.0, y=2.0, z=3.0)
+
+    # Simulate slight movement over time
+    t = time.time()
+    x = round(1.0 + random.uniform(-0.2, 0.2) + 0.5 * (t % 10), 2)
+    y = round(2.0 + random.uniform(-0.2, 0.2) + 0.3 * ((t * 1.2) % 8), 2)
+    z = round(3.0 + random.uniform(-0.2, 0.2) + 0.2 * ((t * 0.8) % 6), 2)
+
+    pkt = UWBPacket(device_id=1, timestamp=timestamp, x=x, y=y, z=z)
     return pkt.to_bytes()
 
 def main():

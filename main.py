@@ -45,20 +45,26 @@ def mock_receive_bytes(device_id):
 
 def main():
     print("Logging packets to Postgres...")
+
+    # ✅ TEMP: Add command column if it doesn't exist
+    cur.execute("ALTER TABLE packets ADD COLUMN IF NOT EXISTS command INTEGER DEFAULT 0")
+    conn.commit()
+
     while True:
         for device_id in range(1, 4):  # Simulate 3 devices
             raw = mock_receive_bytes(device_id)
             pkt = UWBPacket.from_bytes(raw)
 
             cur.execute(
-                "INSERT INTO packets (device_id, timestamp, x, y, z) VALUES (%s, %s, %s, %s, %s)",
-                (pkt.device_id, pkt.timestamp, pkt.x, pkt.y, pkt.z)
+                "INSERT INTO packets (device_id, timestamp, x, y, z, command) VALUES (%s, %s, %s, %s, %s, %s)",
+                (pkt.device_id, pkt.timestamp, pkt.x, pkt.y, pkt.z, pkt.command)
             )
             conn.commit()
 
             print(f"Stored: {pkt}")
 
-        time.sleep(10)  # Generate one round of packets every 10s
+        time.sleep(10)
+
 
 
 if __name__ == "__main__":

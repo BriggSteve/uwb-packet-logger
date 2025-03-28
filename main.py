@@ -46,7 +46,7 @@ def main():
         conn.commit()
 
         print(f"Stored: {pkt}")
-        time.sleep(1)
+        time.sleep(10)
 
 if __name__ == "__main__":
     main()

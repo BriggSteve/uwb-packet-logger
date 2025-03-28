@@ -29,32 +29,38 @@ conn.commit()
 start = time.time()
 
 
-def mock_receive_bytes():
+def mock_receive_bytes(device_id):
     timestamp = int((time.time() - start) * 1000)
 
-    # Simulate slight movement over time
+    # Generate per-device variation
     t = time.time()
-    x = round(1.0 + random.uniform(-0.2, 0.2) + 0.5 * (t % 10), 2)
-    y = round(2.0 + random.uniform(-0.2, 0.2) + 0.3 * ((t * 1.2) % 8), 2)
-    z = round(3.0 + random.uniform(-0.2, 0.2) + 0.2 * ((t * 0.8) % 6), 2)
+    base = device_id * 3  # offset each device
 
-    pkt = UWBPacket(device_id=1, timestamp=timestamp, x=x, y=y, z=z)
+    x = round(base + random.uniform(-0.2, 0.2) + 0.5 * ((t + device_id) % 10), 2)
+    y = round(base + random.uniform(-0.2, 0.2) + 0.3 * ((t * 1.2 + device_id) % 8), 2)
+    z = round(base + random.uniform(-0.2, 0.2) + 0.2 * ((t * 0.8 + device_id) % 6), 2)
+
+    pkt = UWBPacket(device_id=device_id, timestamp=timestamp, x=x, y=y, z=z)
     return pkt.to_bytes()
+
 
 def main():
     print("Logging packets to Postgres...")
     while True:
-        raw = mock_receive_bytes()
-        pkt = UWBPacket.from_bytes(raw)
+        for device_id in range(1, 4):  # Simulate 3 devices
+            raw = mock_receive_bytes(device_id)
+            pkt = UWBPacket.from_bytes(raw)
 
-        cur.execute(
-            "INSERT INTO packets (device_id, timestamp, x, y, z) VALUES (%s, %s, %s, %s, %s)",
-            (pkt.device_id, pkt.timestamp, pkt.x, pkt.y, pkt.z)
-        )
-        conn.commit()
+            cur.execute(
+                "INSERT INTO packets (device_id, timestamp, x, y, z) VALUES (%s, %s, %s, %s, %s)",
+                (pkt.device_id, pkt.timestamp, pkt.x, pkt.y, pkt.z)
+            )
+            conn.commit()
 
-        print(f"Stored: {pkt}")
-        time.sleep(10)
+            print(f"Stored: {pkt}")
+
+        time.sleep(10)  # Generate one round of packets every 10s
+
 
 if __name__ == "__main__":
     main()

@@ -32,15 +32,14 @@ start = time.time()
 def mock_receive_bytes(device_id):
     timestamp = int((time.time() - start) * 1000)
 
-    # Generate per-device variation
-    t = time.time()
-    base = device_id * 3  # offset each device
+    x = round(random.uniform(1.0, 5.0), 2)
+    y = round(random.uniform(1.0, 5.0), 2)
+    z = round(random.uniform(1.0, 5.0), 2)
 
-    x = round(base + random.uniform(-0.2, 0.2) + 0.5 * ((t + device_id) % 10), 2)
-    y = round(base + random.uniform(-0.2, 0.2) + 0.3 * ((t * 1.2 + device_id) % 8), 2)
-    z = round(base + random.uniform(-0.2, 0.2) + 0.2 * ((t * 0.8 + device_id) % 6), 2)
+    # Randomly assign commands (10% chance of HELLO_WORLD)
+    command = 0x01 if random.random() < 0.1 else 0x00
 
-    pkt = UWBPacket(device_id=device_id, timestamp=timestamp, x=x, y=y, z=z)
+    pkt = UWBPacket(device_id, timestamp, x, y, z, command)
     return pkt.to_bytes()
 
 
